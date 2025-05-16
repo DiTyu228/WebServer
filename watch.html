@@ -1,0 +1,113 @@
+{% extends "base.html" %}
+{% block content %}
+<div class="sidebar">
+    <h3>Рекомендуем посмотреть</h3>
+    {% for video in random_videos %}
+    <a href="{{ url_for('watch', video_id=video.id) }}" class="recommended-video">
+        <video class="thumbnail" muted>
+            <source src="{{ url_for('uploaded_file', filename=video.filename) }}">
+        </video>
+        <div class="video-info">
+            <h4>{{ video.title }}</h4>
+            <p>{{ video.author.username }}</p>
+            <p>{{ video.views }} просмотров</p>
+        </div>
+    </a>
+    {% endfor %}
+</div>
+<div class="video-container">
+    <video
+            id="videoPlayer"
+            width="800"
+            controls
+            autoplay
+            muted
+            onplay="initProgressTracking()"
+    >
+        <source src="{{ url_for('uploaded_file', filename=video.filename) }}">
+        Your browser does not support HTML5 video.
+    </video>
+    <div class="video-info">
+        <h1>{{ video.title }}</h1>
+        <div class="video-stats">
+            <span class="views">{{ video.views }} views</span>
+            <div class="reactions">
+                <button class="like-btn">
+                    <i class="fas fa-thumbs-up"></i> {{ likes }}
+                </button>
+                <button class="dislike-btn">
+                    <i class="fas fa-thumbs-down"></i> {{ dislikes }}
+                </button>
+            </div>
+        </div>
+        {% if video.description %}
+        <div class="description">
+            <h3>Описание:</h3>
+            <p>{{ video.description }}</p>
+        </div>
+        {% endif %}
+        <div class="comments-section">
+            <h3>Комментарии ({{ comments|length }}):</h3>
+
+            {% if current_user.is_authenticated %}
+            <form method="POST">
+                <textarea name="comment" placeholder="Оставьте комментарий..." required></textarea>
+                <button type="submit">Отправить</button>
+            </form>
+            {% endif %}
+
+            <div class="comments-list">
+                {% for comment in comments %}
+                <div class="comment">
+                    <strong>{{ comment.author }}</strong>
+                    <small>{{ comment.date.strftime('%d.%m.%Y %H:%M') }}</small>
+                    <p>{{ comment.text }}</p>
+                </div>
+                {% endfor %}
+            </div>
+        </div>
+    </div>
+
+    <script>
+    const video = document.getElementById('videoPlayer');
+    let isTracking = false;
+
+    function startTracking() {
+        if (!isTracking) {
+            setInterval(sendProgress, 5000); // Отправляем каждые 5 секунд
+            isTracking = true;
+        }
+    }
+
+    function updateProgress() {
+        if (video.duration > 0) {
+            const progress = video.currentTime / video.duration;
+            if (progress >= {{ video.view_threshold }}) {
+                sendProgress();
+            }
+        }
+    }
+
+    function sendProgress() {
+        fetch('/track_progress', {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json',
+            },
+            body: JSON.stringify({
+                video_id: {{ video.id }},
+                current_time: video.currentTime,
+                duration: video.duration
+            })
+        });
+    }
+
+
+
+
+
+    </script>
+</div>
+
+
+{% endblock %}

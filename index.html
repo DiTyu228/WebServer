@@ -1,0 +1,17 @@
+{% extends "base.html" %}
+{% block content %}
+    <div class="video-grid">
+        {% for video in videos %}
+            <a href="{{ url_for('watch', video_id=video.id) }}" class="video-card">
+                <video class="thumbnail" muted>
+                    <source src="{{ url_for('uploaded_file', filename=video.filename) }}">
+                </video>
+                <div class="video-info">
+                    <h3 class="video-title">{{ video.title }}</h3>
+                    <p class="channel-name">{{ video.author.username }}</p>
+                    <p class="views">{{ video.views }} views</p>
+                </div>
+            </a>
+        {% endfor %}
+    </div>
+{% endblock %}
